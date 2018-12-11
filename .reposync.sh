@@ -48,11 +48,10 @@ function _wrap_build()
 function reposync()
 {
     local ret=-1
-    sleep 0.009
-    # while [ 0 != $ret ]; do
-    # repo --trace sync --current-branch --no-clone-bundle --no-tags --prune
-    # ret=$?
-    # done
+    while [ 0 != $ret ]; do
+        repo --trace sync --current-branch --no-clone-bundle --no-tags --prune
+        ret=$?
+    done
 }
 
 _wrap_build reposync "$@"
