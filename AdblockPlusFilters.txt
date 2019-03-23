@@ -1,7 +1,7 @@
 [Adblock Plus 2.0]
 ! Checksum: 9v1tkisN88bdqgtGDJDUoQ
 ! Version: 201811260640
-! Title: Custom Filters
+! Title: Physion Filters
 ! Last modified: 26 Nov 2018 06:40 UTC
 ! Expires: 1 days (update frequency)
 ! Homepage: https://github.com/CyrilTaylor/ScriptTools
