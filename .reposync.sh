@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 function _wrap_build()
 {
     local start_time=$(date +"%s")
