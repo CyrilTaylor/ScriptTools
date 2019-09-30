@@ -48,10 +48,68 @@ function _wrap_build()
 
 function reposync()
 {
-    local ret=-1
-    while [ 0 != $ret ]; do
-        repo --trace sync --current-branch --no-clone-bundle --no-tags --prune
-        ret=$?
+    # 当前 repo sync 进程的 pid
+    PID=
+
+    kill_prog() {
+        # kill 当前repo sync子进程
+        echo "kill : $PID"
+        [[ -n $PID ]] && kill $PID
+    }
+
+    start_sync() {
+        # 启动子进程(使用coproc)
+        coproc syncproc { repo sync; }
+        PID=$syncproc_PID
+    }
+
+    restart_sync() {
+        kill_prog
+        start_sync
+    }
+
+    # 如果网络流量在retry_delay时间内小于min_speed, 则认为repo sync已经卡住了
+
+    min_speed="50"
+    retry_delay=300
+
+    ((counter=0))
+    ((n_retries=0))
+
+    restart_sync
+
+    while true; do
+        # 用ifstat检测网速
+        speed=$(ifstat 1 1 | tail -n 1 | awk '{print $1}')
+        result=$(echo "$speed < $min_speed" | bc)
+        if [[ $result == "1" ]]; then
+            ((counter++))
+        else
+            ((counter=0))
+        fi
+        if [[ `ps -p $PID| wc -l` == "1" ]]; then
+            # 检测到子进程已经退出(ps已经查不到它了)
+
+            # 用wait取得子进程返回值
+            wait $PID
+
+            if [[ $? -eq 0 ]]; then
+                echo "sync successful"
+                break
+            else
+                echo "sync failed"
+                ((counter=0))
+                ((n_retries++))
+                restart_sync
+                continue
+            fi
+        fi
+        if ((counter > retry_delay)); then
+            ((counter=0))
+            echo "netspeed low. restart!"
+            ((n_retries++))
+            restart_sync
+        fi
     done
 }
 
